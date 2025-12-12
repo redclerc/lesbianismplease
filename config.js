@@ -38,7 +38,7 @@ window.CONFIG = {
     chalant: 1.5,
     shyGreg: 3,
     introExtro: 1.5,
-    agency: 5
+    agency: 4
   },
 
   thresholds: [
