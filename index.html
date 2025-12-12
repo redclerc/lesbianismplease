@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>date or no date?</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@200;300;400;600&display=swap" rel="stylesheet">
+<style>
+
+#detailsBox {
+    margin-top: 1rem;
+    padding-top: 0.5rem;
+    border-top: 1px dashed #c7c7c7;
+    font-size: 0.8rem;
+    white-space: pre-line;
+    color: #444;
+    display: none; /* hidden by default, toggled by button */
+}
+
+/* flower cursor */
+#cursorFlower {
+    position: fixed;
+    width: 60px;                 /* adjust size as you like */
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    z-index: 99    99;
+    image-rendering: auto;      /* keeps it crisp */
+}
+
+/* soft radial glow */
+#cursorGlow {
+    position: fixed;
+    width: 150px;
+    height: 150px;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    z-index: 9990;
+    border-radius: 50%;
+    background: radial-gradient(
+        circle,
+        rgba(245, 203, 148, 0.766) 0%,
+        rgba(255, 240, 220, 0.35) 40%,
+        rgba(255, 240, 220, 0) 75%
+    );
+    filter: blur(18px);
+    opacity: 0.7;
+}
+
+
+html, body {
+    margin: 0;
+    padding: 0;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    background: #f5f3ec;   /* neutral grey */
+    color: #6e3e3e;           /* darker text */
+    text-transform: lowercase;
+}
+
+/* smooth animations */
+* {
+    box-sizing: border-box;
+    transition: 0.2s ease;
+}
+
+/* layout container */
+.wrapper {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 6rem 1.5rem;
+    position: relative;
+    z-index: 5; /* content stays ABOVE floaters */
+}
+
+/* section cards */
+.section {
+    background: #f5f5f5;
+    border: 1px solid #c7c7c7;
+    padding: 1.3rem 1.5rem;
+    margin-bottom: 2rem;
+    border-radius: 10px;
+    box-shadow: 0px 3px 8px rgb(228, 166, 166);
+    position: relative;
+}
+
+/* section headers */
+.section h2 {
+    font-weight: 700;
+    font-size: 1.25rem;
+    margin-top: 0;
+    margin-bottom: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* tiny sticker icons */
+.sticker {
+    height: 40px;
+    width: auto;
+    display: inline-block;
+}
+
+/* sliders */
+input[type=range] {
+    width: 100%;
+    appearance: none;
+    background: #d0d0d0;
+    height: 4px;
+    border-radius: 2px;
+    outline: none;
+    margin-top: 4px;
+}
+input[type=range]::-webkit-slider-thumb {
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    background: #e5b0b0;      /* dark thumb */
+    border-radius: 50%;
+    cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb:hover {
+    background: #444;
+}
+
+
+
+/* labels for sliders */
+.field {
+    margin-bottom: 1rem;
+}
+.field label {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+.field .value {
+    font-weight: 600;
+}
+
+/* buttons */
+button {
+    background: #111;
+    color: #f5f5f5;
+    border: none;
+    padding: 0.7rem 1.2rem;
+    border-radius: 999px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    font-weight: 600;
+    margin-right: 0.5rem;
+}
+button:hover {
+    background: #333;
+    color: #f5f5f5;
+}
+
+/*bar visual score*/
+.score-bar {
+    width: 100%;
+    height: 8px;
+    border-radius: 999px;
+    background: #e3e3e3;
+    margin-top: 0.75rem;
+    overflow: hidden;
+}
+
+.score-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(to right, #fecaca, #facc15, #bbf7d0);
+    transform-origin: left;
+}
+
+.score-percentile {
+    margin-top: 0.4rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #444;
+}
+
+/* result box */
+#resultBox {
+    margin-top: 1rem;
+    padding: 1.2rem;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+.result-yes {
+    background: #ecfdf3;
+    border: 2px solid #bbf7d0;
+    color: #166534;
+}
+.result-no {
+    background: #fef2f2;
+    border: 2px solid #fecaca;
+    color: #b91c1c;
+}
+
+/* canvas compass */
+#compassContainer {
+    margin-top: 1rem;
+    text-align: center;
+}
+#politicalCompass {
+    border: 2px solid #e8c9c7;
+    background: white;
+    border-radius: 10px;
+}
+
+/* title area */
+.title-area {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.title-area h1 {
+    font-family: "HELVETICA NEUE", monospace;
+    font-weight: 400;                /* slightly bolder but still refined */
+    font-size: 3rem;              /* small, portfolio-like scale */
+    color: hwb(0 55% 19%);                  /* pure white title */
+    text-transform: lowercase;
+    letter-spacing: 0em;          /* tighter kerning */
+    line-height: 1.15;               /* tighter vertical spacing */
+    margin: 0.2rem 0 0.2rem 0;
+}
+
+.title-area .title-caption {
+    font-family: "Helvetica Neue", monospace;
+    font-weight: 400;
+    font-size: 0.9rem;
+    color: hwb(0 53% 21%);                 
+    text-transform: lowercase;
+    letter-spacing: 0em;         
+    line-height: 1.1;
+    margin-top: 0.2rem;
+}
+
+.title-area img {
+    height: 200px;
+    margin-bottom: -8px;     
+}
+
+/* end global styles */
+</style>
+</head>
+
+<body>
+
+<div id="cursorGlow"></div>
+
+<img id="cursorFlower" src="assets/booty.png" alt="" />
+
+<div class="wrapper">
+
+  <div class="title-area">
+    <img src="assets/good in bed.png" alt="good in bed" />
+    <h1><b>date or no date?</b></h1>
+    <div class="title-caption">
+        decision helper · v2.0 · (and honestly i'm probably making bad decisions regardless)
+    </div>
+</div>
+
+<!-- ============================
+     HARD RED FLAGS
+     ============================ -->
+     <div class="section">
+      <h2>
+          <img src="assets/heart.png" class="sticker" alt="heart sticker" />
+          hard red flags
+      </h2>
+  
+        <div class="checkbox-group">
+            <label><input type="checkbox" id="emotionallyUnavailable" /> emotionally unavailable</label>
+            <label><input type="checkbox" id="notAttractedAtAll" /> i am not attracted to them at all</label>
+            <label><input type="checkbox" id="hasAddictions" /> addictions (any)</label>
+        </div>
+      
+  
+      <div class="field">
+          <label>height</label>
+          <div class="height-row" style="display:flex;gap:8px;align-items:center;">
+              <span>feet:</span>
+              <select id="heightFeet">
+                  <option value="5">5</option>
+                  <option value="6">6</option>
+              </select>
+              <span>inches:</span>
+              <select id="heightInches"></select>
+          </div>
+      </div>
+  </div>
+  
+  
+  <!-- ============================
+       CORE ATTRACTION
+       ============================ -->
+  <div class="section">
+      <h2>
+          <img src="assets/ribbon.png" class="sticker" alt="fries sticker" />
+          core attraction
+      </h2>
+  
+      <div class="field">
+          <label>
+              how much do they like me? hate ← → infatuated
+              <span class="value" id="val_likeMe">50</span>
+          </label>
+          <input type="range" id="likeMe" min="0" max="100" value="50" />
+      </div>
+  
+      <div class="field">
+          <label>
+              face attractiveness to me
+              <span class="value" id="val_face">50</span>
+          </label>
+          <input type="range" id="faceAttract" min="0" max="100" value="50" />
+      </div>
+  
+      <div class="field">
+          <label>
+              body attractiveness
+              <span class="value" id="val_body">50</span>
+          </label>
+          <input type="range" id="bodyAttract" min="0" max="100" value="50" />
+      </div>
+  
+      <div class="field">
+          <label>
+              negativity ←  → optimism
+              <span class="value" id="val_positivity">50</span>
+          </label>
+          <input type="range" id="positivity" min="0" max="100" value="50" />
+      </div>
+  
+      <div class="field">
+          <label>
+            kindness (mean ←  → kind)
+              <span class="value" id="val_kindness">50</span>
+          </label>
+          <input type="range" id="kindness" min="0" max="100" value="50" />
+      </div>
+  
+      <div class="field">
+          <label>
+              teasing / humor fit
+              <span class="value" id="val_humor">50</span>
+          </label>
+          <input type="range" id="humor" min="0" max="100" value="50" />
+      </div>
+  
+      <div class="field">
+          <label>
+              conversational flow
+              <span class="value" id="val_conversation">50</span>
+          </label>
+          <input type="range" id="conversation" min="0" max="100" value="50" />
+      </div>
+  </div>
+  
+  
+    <!-- ============================
+     LIFESTYLE & INTERESTS
+     ============================ -->
+<div class="section">
+    <h2>
+      <img src="assets/flower.png" class="sticker" alt="sharks sticker" />
+      lifestyle & interests
+    </h2>
+  
+    <div class="field">
+      <label>
+        content consumed/hobbies
+        <span class="value" id="val_games">50</span>
+      </label>
+      <input type="range" id="hobbiesGames" min="0" max="100" value="50" />
+    </div>
+  
+    <div class="field">
+      <label>
+        fitness level
+        <span class="value" id="val_gym">50</span>
+      </label>
+      <input type="range" id="hobbiesGym" min="0" max="100" value="50" />
+    </div>
+  
+    <div class="field">
+      <label>
+        himbo ← → nerdiness (in a way i like)
+        <span class="value" id="val_nerdiness">50</span>
+      </label>
+      <input type="range" id="nerdiness" min="0" max="100" value="50" />
+    </div>
+  
+    <div class="field">
+      <label>
+        intellectual curiosity
+        <span class="value" id="val_intCurious">50</span>
+      </label>
+      <input type="range" id="intCuriosity" min="0" max="100" value="50" />
+    </div>
+  
+    <div class="field">
+      <label>
+        bonus ⭐ niche interests / rabbit holes
+        <span class="value" id="val_niche">50</span>
+      </label>
+      <input type="range" id="hobbiesNiche" min="0" max="100" value="50" />
+    </div>
+  
+    <div class="field">
+      <label>
+        food preferences compatibility
+        <span class="value" id="val_food">50</span>
+      </label>
+      <input type="range" id="foodPref" min="0" max="100" value="50" />
+    </div>
+  
+    <div class="field">
+      <label>
+        education level
+        <span class="value" id="val_education">50</span>
+      </label>
+      <input type="range" id="education" min="0" max="100" value="50" />
+    </div>
+  
+    <div class="field">
+      <label>
+        wealth / stability
+        <span class="value" id="val_wealth">50</span>
+      </label>
+      <input type="range" id="wealth" min="0" max="100" value="50" />
+    </div>
+  </div>
+  
+  <!-- ============================
+       SOCIAL ENERGY
+       ============================ -->
+    <div class="section">
+        <h2>social energy</h2>
+    
+        <div class="field">
+        <label>
+            emotional curiosity / warmth
+            <span class="value" id="val_emotionalCuriosity">50</span>
+        </label>
+        <input type="range" id="emotionalCuriosity" min="0" max="100" value="50" />
+        </div>
+    
+        <div class="field">
+        <label>
+            nonchalant ← → chalant
+            <span class="value" id="val_chalant">50</span>
+        </label>
+        <input type="range" id="chalantness" min="0" max="100" value="50" />
+        </div>
+    
+        <div class="field">
+        <label>
+            coolness (social currency/swagggg)
+            <span class="value" id="val_swag">50</span>
+        </label>
+        <input type="range" id="swag" min="0" max="100" value="50" />
+        </div>
+    
+        <div class="field">
+        <label>
+            shyness ← → gregariousness
+            <span class="value" id="val_shyGreg">50</span>
+        </label>
+        <input type="range" id="shyGreg" min="0" max="100" value="50" />
+        </div>
+    
+        <div class="field">
+        <label>
+            introverted ← → extroverted
+            <span class="value" id="val_introExtro">50</span>
+        </label>
+        <input type="range" id="introExtro" min="0" max="100" value="50" />
+        </div>
+    
+        <div class="field">
+        <label>
+            arts ← → stem energy
+            <span class="value" id="val_stem">50</span>
+        </label>
+        <input type="range" id="stemVibes" min="0" max="100" value="50" />
+        </div>
+    
+        <div class="field">
+        <label>
+            agency / follow-through
+            <span class="value" id="val_agency">50</span>
+        </label>
+        <input type="range" id="agency" min="0" max="100" value="50" />
+        </div>
+    
+        <div class="field">
+        <label>
+            futch factor
+            <span class="value" id="val_futch">50</span>
+        </label>
+        <input type="range" id="futchFactor" min="0" max="100" value="50" />
+        </div>
+    </div>
+    
+
+  <!-- ============================
+       SOCIAL ENERGY
+       ============================ -->
+  <div class="section">
+      <h2>
+        <img src="assets/oupy.png" class="sticker" alt="sharks sticker" />
+         social energy
+      </h2>
+
+      <div class="field">
+
+        <input type="range" id="emotionalCuriosity" min="0" max="100" value="50" />
+        <span class="value" id="val_emotionalCuriosity">50</span>
+
+          <label>
+              nonchalant ← → chalant
+              <span class="value" id="val_chalant">50</span>
+          </label>
+          <input type="range" id="chalantness" min="0" max="100" value="50" />
+      </div>
+
+     <div class="field">
+        <label>
+            coolness (social currency/swagggg)
+            <span class="value" id="val_swag">50</span>
+        </label>
+        <input type="range" id="swag" min="0" max="100" value="50" />
+    </div>
+
+      <div class="field">
+          <label>
+              shyness ← → gregariousness
+              <span class="value" id="val_shyGreg">50</span>
+          </label>
+          <input type="range" id="shyGreg" min="0" max="100" value="50" />
+      </div>
+
+      <div class="field">
+          <label>
+              introverted ← → extroverted
+              <span class="value" id="val_introExtro">50</span>
+          </label>
+          <input type="range" id="introExtro" min="0" max="100" value="50" />
+      </div>
+
+      <div class="field">
+          <label>
+              arts ← → stem energy
+              <span class="value" id="val_stem">50</span>
+          </label>
+          <input type="range" id="stemVibes" min="0" max="100" value="50" />
+      </div>
+      
+    <div class="field">
+       <label>
+        agency / follow-through
+        <span class="value" id="val_agency">50</span>
+        </label>
+    <input type="range" id="agency" min="0" max="100" value="50" />
+    </div>
+
+    <div class="field">
+        <label>
+          futch factor
+          <span class="value" id="val_futch">50</span>
+        </label>
+        <input type="range" id="futchFactor" min="0" max="100" value="50" />
+      </div>
+  </div>
+  
+  <!-- ============================
+       SOFT SIGNALS
+       ============================ -->
+  <div class="section">
+      <h2>
+          <img src="assets/bats.png" class="sticker" alt="bats sticker" />
+          soft signals
+      </h2>
+  
+      <div class="field">
+          <label>
+              body language
+              <span class="value" id="val_bodyLang">50</span>
+          </label>
+          <input type="range" id="bodyLanguage" min="0" max="100" value="50" />
+      </div>
+  
+      <div class="field">
+          <label>
+              voice (tone / warmth)
+              <span class="value" id="val_voice">50</span>
+          </label>
+          <input type="range" id="voice" min="0" max="100" value="50" />
+      </div>
+  
+      <div class="field">
+          <label>
+              manners / etiquette
+              <span class="value" id="val_manners">50</span>
+          </label>
+          <input type="range" id="manners" min="0" max="100" value="50" />
+      </div>
+  
+      <div class="field">
+          <label>
+              style / fashion sense
+              <span class="value" id="val_style">50</span>
+          </label>
+          <input type="range" id="style" min="0" max="100" value="50" />
+      </div>
+
+      <div class="field">
+        <label>
+            puppiness (combination of intangible cute/endearing qualities)
+            <span class="value" id="val_puppy">50</span>
+        </label>
+        <input type="range" id="puppyFactor" min="0" max="100" value="50" />
+    </div>  
+  </div>
+  
+  <!-- ============================
+       CULTURAL SIMILARITY / RELIGION / DOUCHINESS
+       ============================ -->
+  <div class="section">
+      <h2>
+          <img src="assets/phone.png" class="sticker" alt="ribbon sticker" />
+          miscellaneous
+      </h2>
+  
+      <div class="field">
+          <label>
+              religion intensity
+              <span class="value" id="val_religion">50</span>
+          </label>
+          <input type="range" id="religion" min="0" max="100" value="50" />
+      </div>
+  
+      <div class="field">
+          <label>
+              douchiness ←→ loser energy
+              <span class="value" id="val_douchiness">50</span>
+          </label>
+          <input type="range" id="douchiness" min="0" max="100" value="50" />
+      </div>
+  
+      <div class="field">
+          <label>
+              slut factor
+              <span class="value" id="val_promisc">50</span>
+          </label>
+          <input type="range" id="promiscuity" min="0" max="100" value="50" />
+      </div>
+  </div>
+  
+  
+  <!-- ============================
+       POLITICAL COMPASS
+       ============================ -->
+  <div class="section">
+      <h2>
+          <img src="assets/swag.png" class="sticker" alt="swag silhouettes" />
+          political compass
+      </h2>
+  
+      <div class="field">
+          <label>
+              economic left ↔ right
+              <span class="value" id="val_econ">0</span>
+          </label>
+          <input type="range" id="econ" min="-100" max="100" value="0" />
+      </div>
+  
+      <div class="field">
+          <label>
+              libertarian ↔ authoritarian
+              <span class="value" id="val_social">0</span>
+          </label>
+          <input type="range" id="social" min="-100" max="100" value="0" />
+      </div>
+  
+      <div id="compassContainer">
+          <canvas id="politicalCompass" width="220" height="220"></canvas>
+      </div>
+  </div>
+      
+      <!-- ============================================
+           POLITICAL COMPASS CANVAS RENDERING
+           ============================================ -->
+      <script>
+      function drawCompass() {
+          const canvas = document.getElementById("politicalCompass");
+          const ctx = canvas.getContext("2d");
+          const w = canvas.width;
+          const h = canvas.height;
+      
+          // clear
+          ctx.clearRect(0, 0, w, h);
+      
+          // pastel quadrants
+          ctx.globalAlpha = 0.20;
+          // left-libertarian quadrant (#e8c9c7)
+          ctx.fillStyle = "#e8c9c7";
+          ctx.fillRect(0, h/2, w/2, h/2);
+          // right-libertarian (#f1d98f)
+          ctx.fillStyle = "#f1d98f";
+          ctx.fillRect(w/2, h/2, w/2, h/2);
+          // left-authoritarian (#d4e3e0)
+          ctx.fillStyle = "#d4e3e0";
+          ctx.fillRect(0, 0, w/2, h/2);
+          // right-authoritarian (#f18952)
+          ctx.fillStyle = "#f18952";
+          ctx.fillRect(w/2, 0, w/2, h/2);
+      
+          ctx.globalAlpha = 1.0;
+      
+          // axis lines
+          ctx.strokeStyle = "#e8c9c7";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(w/2, 0);
+          ctx.lineTo(w/2, h);
+          ctx.moveTo(0, h/2);
+          ctx.lineTo(w, h/2);
+          ctx.stroke();
+      
+          // get slider values
+          const econ = parseInt(document.getElementById("econ").value, 10) / 100; // -1 to +1
+          const social = parseInt(document.getElementById("social").value, 10) / 100; // -1 to +1
+      
+          // convert to canvas coordinates
+          const x = (econ + 1) / 2 * w;
+          const y = (1 - (social + 1) / 2) * h;
+      
+          // draw dot
+          ctx.fillStyle = "#333";
+          ctx.beginPath();
+          ctx.arc(x, y, 6, 0, Math.PI * 2);
+          ctx.fill();
+      }
+      
+      // redraw whenever sliders move
+      document.addEventListener("DOMContentLoaded", () => {
+          drawCompass();
+          document.getElementById("econ").addEventListener("input", drawCompass);
+          document.getElementById("social").addEventListener("input", drawCompass);
+      });
+      </script>
+      
+      
+      <!-- ============================================
+           SLIDER VALUE BINDINGS
+           ============================================ -->
+<script>
+const sliderPairs = [
+  ["likeMe","val_likeMe"],
+  ["faceAttract","val_face"],
+  ["bodyAttract","val_body"],
+  ["positivity","val_positivity"],
+  ["kindness","val_kindness"],
+  ["humor","val_humor"],
+  ["conversation","val_conversation"],
+  ["hobbiesGames","val_games"],
+  ["hobbiesGym","val_gym"],
+  ["intCuriosity","val_intCurious"],
+  ["hobbiesNiche","val_niche"],
+  ["foodPref","val_food"],
+  ["swag","val_swag"],
+  ["education","val_education"],
+  ["wealth","val_wealth"],
+  ["bodyLanguage","val_bodyLang"],
+  ["voice","val_voice"],
+  ["manners","val_manners"],
+  ["style","val_style"],
+  ["promiscuity","val_promisc"],
+  ["douchiness","val_douchiness"],
+  ["religion","val_religion"],
+  ["econ","val_econ"],
+  ["social","val_social"],
+  ["gutOverride","val_gut"],
+  ["puppyFactor","val_puppy"],
+
+  // NEW:
+  ["agency","val_agency"]
+];
+
+document.addEventListener("DOMContentLoaded", () => {
+  sliderPairs.forEach(([id, label]) => {
+    const input = document.getElementById(id);
+    const out = document.getElementById(label);
+
+    if (!input || !out) {
+      console.warn("missing slider or label:", { id, label, input, out });
+      return;
+    }
+
+    // initialize
+    out.textContent = input.value;
+
+    input.addEventListener("input", () => {
+      out.textContent = input.value;
+    });
+  });
+});
+</script>
+      
+<!-- ============================================
+     SCORING ENGINE + DECISION LOGIC
+     ============================================ -->
+     <script>
+      // normalize slider 0–100 → 0–1
+      function slider01(id) {
+          return parseInt(document.getElementById(id).value, 10) / 100;
+      }
+    
+      // convert 0–1 → -1 to +1 range
+      function signed(x) {
+          return 2 * x - 1;
+      }
+    
+      /* -----------------------------
+         HEIGHT PREFERENCE MODEL
+         ----------------------------- */
+      function heightScore(heightInInches) {
+          if (heightInInches < 65 || heightInInches > 75) return null;
+    
+          const map = [
+              { range: [70,71], score: 1.0 },
+              { range: [69,72], score: 0.8 },
+              { range: [68,73], score: 0.6 },
+              { range: [67,74], score: 0.3 }
+          ];
+          for (const m of map) {
+              if (heightInInches >= m.range[0] && heightInInches <= m.range[1]) return m.score;
+          }
+          return 0.0;
+      }
+
+        // chalantness: goldilocks curve (slightly chalant = best)
+        function chalantScore(val01) {
+            const ideal = 0.60;   // slightly chalant is best
+            const width = 0.45;   // how quickly extremes become negative
+            let x = (val01 - ideal) / width;
+        
+            // parabolic peak at ideal: 1 at ideal, falls to negative near extremes
+            let s = 1 - x * x;   // 1 → best, <0 → bad
+        
+            // compress scores into -1..+1
+            return Math.max(-1, Math.min(1, s * 1.2));
+        }
+
+    /* -----------------------------
+        AGENCY MODEL
+    ------------------------------- */
+    function agencyScore() {
+    // 0–1 from slider
+    const raw = slider01("agency");   // 0 (low agency) → 1 (high agency)
+
+    // map to -1..1
+    const s = 2 * raw - 1;
+
+    // shape it:
+    //  - high agency (s > 0) = good
+    //  - low agency (s < 0) = punished more heavily
+    const shaped = s >= 0 ? s : 1.7 * s; // 70% harsher penalty on low agency
+
+    return shaped;  // will feed into a big weight
+}
+    
+      /* -----------------------------
+         RELIGION MODEL
+         ----------------------------- */
+      function religionGoodness() {
+          const r = slider01("religion");
+          if (r <= 0.5) {
+              return r * 2;
+          } else {
+              return 1 - 4 * (r - 0.5);
+          }
+      }
+    
+      /* -----------------------------
+         HARD RED FLAGS + HEIGHT CHECK
+         ----------------------------- */
+      function hasHardRedFlags() {
+        const hf = {
+        emotionallyUnavailable: document.getElementById("emotionallyUnavailable").checked,
+        notAttracted:           document.getElementById("notAttractedAtAll").checked,
+        addictions:             document.getElementById("hasAddictions").checked
+        };
+
+        for (const key in hf) {
+        if (hf[key]) return { hard: true, reason: "hard red flag selected." };
+        }
+
+    
+          const feet   = parseInt(document.getElementById("heightFeet").value, 10);
+          const inches = parseInt(document.getElementById("heightInches").value, 10);
+          const totalHeight = feet * 12 + inches;
+    
+          const hScore = heightScore(totalHeight);
+          if (hScore === null) {
+              return { hard: true, reason: "height outside acceptable range." };
+          }
+    
+          return { hard: false, totalHeight, heightPref: hScore };
+      }
+    
+      /* -----------------------------
+         DOUCHINESS MODEL
+         ----------------------------- */
+      function douchinessBalanced(val01) {
+          let d = 1 - 4 * Math.pow(val01 - 0.5, 2);
+          return Math.max(d, 0);
+      }
+    // shy ↔ outgoing: slight gregariousness (~0.65) is best
+        function shyGregScore(val01) {
+            const center = 0.65;   // where it's ideal
+            const width  = 0.5;    // how quickly extremes fall off
+            let x = (val01 - center) / width;
+            let s = 1 - x * x;     // parabola, peak at center
+            s = 2 * s - 1;         // map roughly to -1..+1
+            return Math.max(-1, Math.min(1, s));
+        }
+        
+        // introvert ↔ extrovert: very soft preference for slight extroversion
+        function introExtroScore(val01) {
+            const center = 0.6;    // a bit extroverted
+            const width  = 0.7;    // flatter curve (lighter preference)
+            let x = (val01 - center) / width;
+            let s = 1 - x * x;
+            s = 2 * s - 1;
+            return Math.max(-1, Math.min(1, s));
+        }
+      /* -----------------------------
+         POLITICAL SCORING
+         ----------------------------- */
+      function politicalScore() {
+          const econ   = parseInt(document.getElementById("econ").value, 10) / 100;
+          const social = parseInt(document.getElementById("social").value, 10) / 100;
+    
+          const ll = (-econ + -social) / 2;
+          const rl = ( econ + -social) / 2;
+          const moderate = 1 - (Math.abs(econ) + Math.abs(social)) / 2;
+          const la = (-econ + social) / 2;
+          const ra = ( econ + social) / 2;
+    
+          let score =
+              2.0 * ll +
+              1.0 * rl +
+              0.5 * moderate -
+              1.0 * Math.max(0, la) -
+              3.0 * Math.max(0, ra);
+    
+          return score;
+      }
+    
+      /* -----------------------------
+         MAIN DECISION ENGINE
+         ----------------------------- */
+    
+      let entries = [];
+    
+      function runDecision() {
+          const hardCheck = hasHardRedFlags();
+          const resultBox = document.getElementById("resultBox");
+          const debugBox  = document.getElementById("detailsBox");
+          const nameInput = (document.getElementById("personName")?.value || "").trim();
+          const personName = nameInput || `entry_${entries.length + 1}`;
+    
+          if (hardCheck.hard) {
+              const decision = "girl no";
+              const note = hardCheck.reason || "be so for real... absolutely not.";
+    
+              resultBox.className = "result-no";
+              resultBox.innerHTML = `
+                  <div>${decision}</div>
+                  <div class="result-note">
+                      ${note}<br/>saved as: ${personName}
+                  </div>
+                  <img src="assets/redflag.gif" style="width:120px;margin-top:10px;" />
+              `;
+              entries.push({
+                  name: personName,
+                  timestamp: new Date().toISOString(),
+                  decision,
+                  score: null,
+                  notes: note
+              });
+    
+              if (debugBox) {
+                  debugBox.textContent = "hard red flag triggered → no further scoring.";
+              }
+              return;
+          }
+    
+          // collect normalized values
+          const likeMe       = slider01("likeMe");
+          const faceAttract  = slider01("faceAttract");
+          const bodyAttract  = slider01("bodyAttract");
+          const positivity   = slider01("positivity");
+          const kindness     = slider01("kindness");
+          const humor        = slider01("humor");
+          const conversation = slider01("conversation");
+          const games        = slider01("hobbiesGames");
+          const gym          = slider01("hobbiesGym");
+          const nerd         = slider01("nerdiness");
+          const intCurious   = slider01("intCuriosity");
+          const genCurious   = slider01("genCuriosity");
+          const niche        = slider01("hobbiesNiche");
+          const food         = slider01("foodPref");
+          const education    = slider01("education");
+          const wealth       = slider01("wealth");
+          const coolness     = slider01("swag");
+          const puppy        = slider01("puppyFactor");
+          const agency       = agencyScore();
+          const bodyLang     = slider01("bodyLanguage");
+          const voice        = slider01("voice");
+          const manners      = slider01("manners");
+          const style        = slider01("style");
+          const promisc      = slider01("promiscuity");
+          const dRaw         = slider01("douchiness");
+          const chalant      = slider01("chalantness");
+          const shyGreg      = slider01("shyGreg");
+          const introExtro   = slider01("introExtro");
+          const stemVibes    = slider01("stemVibes");
+          const dBalance     = douchinessBalanced(dRaw);
+          const relScore     = religionGoodness();
+          const poli         = politicalScore();
+          const shyGregPref    = shyGregScore(shyGreg);          // -1..+1
+          const introExtroPref = introExtroScore(introExtro);    // -1..+1
+
+          const gutRaw   = parseInt(document.getElementById("gutOverride").value, 10) || 0;
+          const gutBonus = gutRaw;
+    
+          const heightVal = hardCheck.heightPref ?? 0.0;
+    
+          const w = {
+              likeMe:       3,
+              face:         4,
+              body:         3,
+              positivity:   2,
+              kindness:     3.5,
+              humor:        4.5,
+              conversation: 4.5,
+              games:        2,
+              gym:          3,
+              nerd:         2.5,
+              intCurious:   4.5,
+              genCurious:   2,
+              niche:        1,
+              food:         2,
+              coolness:     2,
+              education:    3.5,
+              wealth:       3,
+              puppy:        3.5,
+              bodyLang:     2,
+              voice:        2,
+              manners:      2,
+              style:        2,
+              height:       2,
+              religion:     1.5,
+              douchiness:   3,
+              promiscuity: -3,
+              political:    2,
+              stemVibes:    3,    
+              chalant:      1.5,  
+              shyGreg:      3,    
+              introExtro:   1.5,  
+              agency:       5,   
+};
+    
+          const contrib = {
+              likeMe:       w.likeMe       * signed(likeMe),
+              face:         w.face         * signed(faceAttract),
+              body:         w.body         * signed(bodyAttract),
+              positivity:   w.positivity   * signed(positivity),
+              kindness:     w.kindness     * signed(kindness),
+              humor:        w.humor        * signed(humor),
+              conversation: w.conversation * signed(conversation),
+              games:        w.games        * signed(games),
+              gym:          w.gym          * signed(gym),
+              nerd:         w.nerd         * signed(nerd),
+              intCurious:   w.intCurious   * signed(intCurious),
+              genCurious:   w.genCurious   * signed(genCurious),
+              niche:        w.niche        * signed(niche),
+              food:         w.food         * signed(food),
+              coolness:     w.coolness     * signed(coolness),
+              education:    w.education    * signed(education),
+              wealth:       w.wealth       * signed(wealth),
+              puppy:        w.puppy        * signed(puppy),
+              bodyLang:     w.bodyLang     * signed(bodyLang),
+              voice:        w.voice        * signed(voice),
+              manners:      w.manners      * signed(manners),
+              style:        w.style        * signed(style),
+              height:       w.height       * signed(heightVal),
+              religion:     w.religion     * relScore,
+              douchiness:   w.douchiness   * signed(dBalance),
+              promiscuity:  w.promiscuity  * promisc,
+              stemVibes:    w.stemVibes   * signed(stemVibes),
+              chalant:      w.chalant     * chalantScore(chalant),
+              shyGreg:      w.shyGreg     * shyGregPref,
+              introExtro:   w.introExtro  * introExtroPref,
+              agency:       w.agency       * agency,
+
+              political:    w.political    * poli,
+              gut:          gutBonus
+          };
+    
+          const score = Object.values(contrib).reduce((sum, x) => sum + x, 0);
+    
+          // ideal guy max score (approx)
+          const maxScore =
+              w.likeMe +
+              w.face +
+              w.body +
+              w.positivity +
+              w.kindness +
+              w.humor +
+              w.conversation +
+              w.games +
+              w.gym +
+              w.nerd +
+              w.intCurious +
+              w.genCurious +
+              w.niche +
+              w.food +
+              w.coolness +
+              w.education +
+              w.wealth +
+              w.puppy +
+              w.bodyLang +
+              w.voice +
+              w.manners +
+              w.style +
+              w.height +
+              w.religion +
+              w.douchiness +
+              w.stemVibes +
+              w.chalant +
+              w.shyGreg +
+              w.introExtro +
+              w.agency +         
+              0 +               // promiscuity ideal = no penalty
+              (2 * w.political) +
+              10;               // max gut bonus
+    
+          const fitPercent = Math.max(
+              0,
+              Math.min(100, Math.round((score / maxScore) * 100))
+          );
+    
+          // decision thresholds
+          let decision, note, css;
+          if (score >= 40) {
+              decision = "this might be it";
+              note = "very high alignment!!! your brain and your gut are on the same page.";
+              css = "result-yes";
+          } else if (score >= 30) {
+              decision = "date";
+              note = "good alignment. worth a real-life dateee ;)";
+              css = "result-yes";
+          } else if (score >= 25) {
+              decision = "date casually";
+              note = "this could be promising, but keep it low stakes.";
+              css = "result-yes";
+          } else if (score >= 20) {
+              decision = "situationship";
+              note = "chemistry is there but values / logistics may be messy. proceed with awareness.";
+              css = "result-yes";
+          } else if (score >= 10) {
+              decision = "maybe you can hang out once";
+              note = "curiosity is allowed, just do not over-invest.";
+              css = "result-no";
+          } else if (score >= 0) {
+              decision = "textuationship";
+              note = "fine for occasional texting but probably not worth IRL energy.";
+              css = "result-no";
+          } else if (score >= -1) {
+              decision = "is this really what you want";
+              note = "you are negotiating against your own standards here.";
+              css = "result-no";
+          } else {
+              decision = "girl no";
+              note = "you already know the answer.";
+              css = "result-no";
+          }
+    
+          resultBox.className = css;
+          resultBox.innerHTML = `
+            <div>${decision}</div>
+            <div class="result-note">
+                score: ${score.toFixed(2)}<br/>
+                ~${fitPercent}% match to your ideal<br/>
+                ${note}<br/>
+                saved as: ${personName}
+            </div>
+            <div class="score-bar">
+                <div class="score-fill" style="width: ${fitPercent}%;"></div>
+            </div>
+            <div class="score-percentile">
+                0% = not your type at all · 100% = terrifyingly on-paper perfect
+            </div>
+            <img src="assets/chickenflower.gif" style="width:120px;margin-top:10px;" />
+          `;
+    
+          if (debugBox) {
+              const lines = [];
+              lines.push(`total score: ${score.toFixed(2)}`);
+              lines.push("");
+              lines.push(`fit to ideal: ${fitPercent}%`);
+              lines.push("");
+              lines.push("breakdown:");
+              function line(label, key) {
+                  if (contrib[key] === undefined) return;
+                  const c = contrib[key];
+                  lines.push(`${label}: ${c >= 0 ? "+" : ""}${c.toFixed(2)}`);
+              }
+              line("how much they like you", "likeMe");
+              line("face attractiveness", "face");
+              line("body attractiveness", "body");
+              line("positivity / optimism", "positivity");
+              line("kindness", "kindness");
+              line("humor fit", "humor");
+              line("conversational flow", "conversation");
+              line("games alignment", "games");
+              line("gym / active alignment", "gym");
+              line("nerdiness", "nerd");
+              line("intellectual curiosity", "intCurious");
+              line("general curiosity", "genCurious");
+              line("niche interests / rabbit holes", "niche");
+              line("coolness", "coolness");
+              line("food preferences", "food");
+              line("education level", "education");
+              line("wealth / stability", "wealth");
+              line("puppy factor", "puppy");
+              line("body language", "bodyLang");
+              line("voice", "voice");
+              line("manners / etiquette", "manners");
+              line("style / fashion", "style");
+              line("height preference (within range)", "height");
+              line("religion intensity alignment", "religion");
+              line("douchiness vs loser balance", "douchiness");
+              line("promiscuity likelihood", "promiscuity");
+              line("political compass fit", "political");
+              line("stem vibes / stem job energy", "stemVibes");
+              line("chalantness (agency)", "chalant");
+              line("shyness ↔ gregariousness", "shyGreg");
+              line("agency / follow-through", "agency");
+              line("introvert ↔ extrovert", "introExtro");
+              line("gut override", "gut");
+    
+              debugBox.textContent = lines.join("\n");
+          }
+    
+          entries.push({
+              name: personName,
+              timestamp: new Date().toISOString(),
+              decision,
+              score: score.toFixed(2),
+              econ: document.getElementById("econ").value,
+              social: document.getElementById("social").value
+          });
+      }
+    </script>
+    
+
+
+<!-- ============================================
+     CSV EXPORT FUNCTION
+     ============================================ -->
+     <script>
+      function downloadLog() {
+          if (!entries.length) {
+              alert("no entries saved yet!");
+              return;
+          }
+      
+          const headers = [
+              "name",
+              "timestamp",
+              "decision",
+              "score",
+              "econ",
+              "social"
+          ];
+      
+          const rows = entries.map(e => [
+              e.name,
+              e.timestamp,
+              e.decision,
+              e.score,
+              e.econ,
+              e.social
+          ]);
+      
+          const csv = [
+              headers.join(","),
+              ...rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(","))
+          ].join("\n");
+      
+          const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+          const url = URL.createObjectURL(blob);
+      
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "date_decisions.csv";
+          a.click();
+      
+          URL.revokeObjectURL(url);
+      }
+      </script>
+      
+      
+      <!-- ============================================
+           INIT HEIGHT SELECT + SETUP RUN BUTTON
+           ============================================ -->
+           <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                /* initialize height dropdown (inches) */
+                const inchesSelect = document.getElementById("heightInches");
+                for (let i = 0; i <= 11; i++) {
+                    const opt = document.createElement("option");
+                    opt.value = i;
+                    opt.textContent = i;
+                    inchesSelect.appendChild(opt);
+                }
+                inchesSelect.value = 10; // default 5'10
+            
+                // run decision button
+                const runBtn = document.getElementById("runButton");
+                if (runBtn) {
+                    runBtn.addEventListener("click", runDecision);
+                }
+            
+                // download button
+                const dlBtn = document.getElementById("downloadButton");
+                if (dlBtn) {
+                    dlBtn.addEventListener("click", downloadLog);
+                }
+            
+                // details toggle
+                const detailsBtn = document.getElementById("toggleDetails");
+                const detailsBox = document.getElementById("detailsBox");
+
+                if (detailsBtn && detailsBox) {
+                    detailsBtn.addEventListener("click", () => {
+                        const isHidden = detailsBox.style.display === "none" || !detailsBox.style.display;
+
+                        if (isHidden) {
+                            detailsBox.style.display = "block";
+                            detailsBtn.textContent = "hide those crazy ass numbers";
+                            detailsBtn.style.background = "#444"; 
+                        } else {
+                            detailsBox.style.display = "none";
+                            detailsBtn.textContent = "show me the crazy ass numbers";
+                            detailsBtn.style.background = "#111";
+                        }
+                    });
+                }
+            });
+            </script>   
+
+    <div class="section">
+      <h2>final decision</h2>
+
+      <div class="field">
+        <label>name / nickname for this guy</label>
+        <input type="text" id="personName" placeholder="e.g., loml." />
+      </div>
+
+      <div class="field">
+        <label>
+          gut override: what does intuition say? (bad vibes ←→ good vibes)
+          <span class="value" id="val_gut">0</span>
+        </label>
+        <input type="range" id="gutOverride" min="-10" max="10" value="0" />
+      </div>
+
+      <button id="runButton" type="button">run decision</button>
+      <button id="downloadButton" type="button">download log (csv)</button>
+      <button id="toggleDetails" type="button">show details</button>
+
+      <div id="resultBox"></div>
+      <div id="detailsBox"></div>
+    </div>
+  </div>
+
+  <!-- scripts (order matters) -->
+  <script src="config.js"></script>
+  <script src="helpers.js"></script>
+  <script src="engine.js"></script>
+  <script src="ui.js"></script>  
+</body>
+</html>
