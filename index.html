@@ -1273,26 +1273,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (dlBtn) {
                     dlBtn.addEventListener("click", downloadLog);
                 }
-            
-                // details toggle
-                const detailsBtn = document.getElementById("toggleDetails");
-                const detailsBox = document.getElementById("detailsBox");
-
-                if (detailsBtn && detailsBox) {
-                    detailsBtn.addEventListener("click", () => {
-                        const isHidden = detailsBox.style.display === "none" || !detailsBox.style.display;
-
-                        if (isHidden) {
-                            detailsBox.style.display = "block";
-                            detailsBtn.textContent = "hide those crazy ass numbers";
-                            detailsBtn.style.background = "#444"; 
-                        } else {
-                            detailsBox.style.display = "none";
-                            detailsBtn.textContent = "show me the crazy ass numbers";
-                            detailsBtn.style.background = "#111";
-                        }
-                    });
-                }
             });
             </script>   
 
